@@ -3,8 +3,8 @@
     "name": "rasoi-book",
     "slug": "rasoi-book",
     "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "orientation": "default",
+    "icon": "./assets/images/icon.potraitpng",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
