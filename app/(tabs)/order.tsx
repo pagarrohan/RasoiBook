@@ -1,3 +1,4 @@
+//@ts-nocheck
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { useRoute } from '@react-navigation/native';
@@ -116,23 +117,7 @@ const OrderPage = () => {
 
   return (
     <View style={styles.container}>
-      {/* Order Summary */}
-      <View style={styles.orderSummary}>
-      <Text style={styles.header}>Ordering </Text>
-        <FlatList
-          data={order}
-          renderItem={renderOrderItem}
-          keyExtractor={(item, index) => index.toString()}
-          ListEmptyComponent={<Text style={styles.noRecords}>No Records</Text>}
-        />
-        <View style={styles.summaryFooter}>
-          <Text style={styles.summaryText}>Quantity: {order.reduce((total, item) => total + item.quantity, 0)}</Text>
-          <Text style={styles.summaryText}>Subtotal: ${subtotal.toFixed(2)}</Text>
-        </View>
-        <TouchableOpacity style={styles.sendButton}>
-          <Text style={styles.sendButtonText}>Send</Text>
-        </TouchableOpacity>
-      </View>
+     
 
       {/* Item Selection */}
       <View style={styles.itemSelection}>
@@ -155,6 +140,23 @@ const OrderPage = () => {
           style={styles.itemGrid}
           showsVerticalScrollIndicator={false}
         />
+      </View>
+       {/* Order Summary */}
+       <View style={styles.orderSummary}>
+      <Text style={styles.header}>Ordering </Text>
+        <FlatList
+          data={order}
+          renderItem={renderOrderItem}
+          keyExtractor={(item, index) => index.toString()}
+          ListEmptyComponent={<Text style={styles.noRecords}>No Records</Text>}
+        />
+        <View style={styles.summaryFooter}>
+          <Text style={styles.summaryText}>Quantity: {order.reduce((total, item) => total + item.quantity, 0)}</Text>
+          <Text style={styles.summaryText}>Subtotal: ${subtotal.toFixed(2)}</Text>
+        </View>
+        <TouchableOpacity style={styles.sendButton}>
+          <Text style={styles.sendButtonText}>Send</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );

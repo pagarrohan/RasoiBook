@@ -62,6 +62,22 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <TabBarIcon name="gear" color={'pink'} />,
         }}
       />
+      <Tabs.Screen
+        name="print"
+        options={{
+          title: 'Print',
+          headerShown: false,
+          tabBarIcon: ({ color }) => <TabBarIcon name="print" color={'yellow'} />,
+        }}
+      />
+           <Tabs.Screen
+        name="print1"
+        options={{
+          title: 'Print1',
+          headerShown: false,
+          tabBarIcon: ({ color }) => <TabBarIcon name="print" color={'magenta'} />,
+        }}
+      />
     </Tabs>
   );
 }

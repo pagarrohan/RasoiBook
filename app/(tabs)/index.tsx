@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { useNavigation } from 'expo-router';
 import React from 'react';
 import { View, Text, FlatList, StyleSheet, useWindowDimensions, TouchableOpacity } from 'react-native';
@@ -39,6 +40,7 @@ const TableCard = ({ tableNumber, time, guests, amount, waiter, status }:any) =>
   );
 };
 
+
 const RestaurantTables = () => {
   const { width, height } = useWindowDimensions();
   const isPortrait = height > width;
@@ -46,7 +48,7 @@ const RestaurantTables = () => {
   const numColumns = isPortrait ? 3 : 4;
 
   const data = [
-    { id: '111', tableNumber: '101', time: '01:23 PM', guests: '1', amount: '$176.00', waiter: 'Admin', status: 'closed' },
+    { id: '111', tableNumber: 'abcde', time: '01:23 PM', guests: '1', amount: '$176.00', waiter: 'Admin', status: 'closed' },
     { id: '222', tableNumber: '102', time: '08:02 AM', guests: '2', amount: '$98.00', waiter: 'Admin', status: 'closed' },
     { id: '333', tableNumber: '103', time: '', guests: '', amount: '', waiter: '', status: 'closed' },
     { id: '4333', tableNumber: '104', time: '01:24 PM', guests: '2', amount: '$30.00', waiter: 'Admin', status: 'printed' },
@@ -58,7 +60,7 @@ const RestaurantTables = () => {
     { id: '1033', tableNumber: '110', time: '', guests: '', amount: '', waiter: '', status: 'default' },
     { id: '1133', tableNumber: '111', time: '', guests: '', amount: '', waiter: '', status: 'default' },
     { id: '123', tableNumber: '112', time: '03:55 PM', guests: '2', amount: '$15.00', waiter: 'Admin', status: 'closed' },
-    { id: '133', tableNumber: '101', time: '01:23 PM', guests: '1', amount: '$176.00', waiter: 'Admin', status: 'closed' },
+    { id: '133', tableNumber: 'qwe', time: '01:23 PM', guests: '1', amount: '$176.00', waiter: 'Admin', status: 'closed' },
     { id: '233', tableNumber: '102', time: '08:02 AM', guests: '2', amount: '$98.00', waiter: 'Admin', status: 'closed' },
     { id: '3333', tableNumber: '103', time: '', guests: '', amount: '', waiter: '', status: 'default' },
     { id: '43', tableNumber: '104', time: '01:24 PM', guests: '2', amount: '$30.00', waiter: 'Admin', status: 'printed' },
