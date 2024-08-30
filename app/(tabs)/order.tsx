@@ -1,51 +1,37 @@
-//@ts-nocheck
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import { useRoute } from '@react-navigation/native';
-
-const categories = ['Salads', 'Sandwiches', 'Main', 'Appetizers', 'Sweets', 'Drinks'];
-const items = {
-  Salads: [
-    { id: '1', name: 'Endive & Orange', price: '$13.00' },
-    { id: '2', name: 'Caesar Salad', price: '$15.00' },
-    // Add more items
-  ],
-  Sandwiches: [
-    { id: '127', name: 'Club Sandwich', price: '$10.00' },
-    { id: '128', name: 'Ham Sandwich', price: '$8.00' },
-    // Add more items
-  ],
-  // Add more categories and items
-};
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; // Add this import for icons
+import { categories, items, previouslyOrderedItems } from '../db';
 
 const OrderPage = () => {
-  const route = useRoute();
-  const { tableNumber } = route.params || {}; // Get table number from route params
-  const [selectedCategory, setSelectedCategory] = useState('Salads');
+  const [selectedCategory, setSelectedCategory] = useState(categories[0]); // Default to the first category
   const [order, setOrder] = useState([]);
   const [subtotal, setSubtotal] = useState(0);
+  const [activeTab, setActiveTab] = useState('Ordering');
+  const [searchQuery, setSearchQuery] = useState(''); // State for search query
+  const [filteredItems, setFilteredItems] = useState(items[selectedCategory]); // State for filtered items
+  const [searchBy, setSearchBy] = useState('name'); // State to toggle between search by name or code
+  const [selectedOrderedItem, setSelectedOrderedItem] = useState(null); // State for selected ordered item
 
   useEffect(() => {
-    // Use tableNumber if needed (e.g., pre-fill table number in order summary)
-  }, [tableNumber]);
+    filterItems(searchQuery); // Filter items based on the search query
+  }, [searchQuery, selectedCategory, searchBy]);
 
   const addItemToOrder = (item) => {
     const existingItemIndex = order.findIndex(orderItem => orderItem.id === item.id);
     if (existingItemIndex > -1) {
-      // Item already in the order, increase count
       const updatedOrder = [...order];
       updatedOrder[existingItemIndex].quantity += 1;
       setOrder(updatedOrder);
       updateSubtotal(updatedOrder);
     } else {
-      // Item not in the order, add it with quantity 1
       setOrder([...order, { ...item, quantity: 1 }]);
-      setSubtotal(subtotal + parseFloat(item.price.replace('$', '')));
+      setSubtotal(subtotal + parseFloat(item.price.replace('₹', '')));
     }
   };
 
   const updateSubtotal = (updatedOrder) => {
-    const newSubtotal = updatedOrder.reduce((total, item) => total + (parseFloat(item.price.replace('$', '')) * item.quantity), 0);
+    const newSubtotal = updatedOrder.reduce((total, item) => total + (parseFloat(item.price.replace('₹', '')) * item.quantity), 0);
     setSubtotal(newSubtotal);
   };
 
@@ -73,9 +59,27 @@ const OrderPage = () => {
     }
   };
 
+  const filterItems = (query) => {
+    if (query.trim() === '') {
+      setFilteredItems(items[selectedCategory]); // Show all items if search query is empty
+    } else {
+      const filtered = items[selectedCategory].filter(item => {
+        if (searchBy === 'name') {
+          return item.name.toLowerCase().includes(query.toLowerCase());
+        } else if (searchBy === 'code') {
+          return item.id.toLowerCase().includes(query.toLowerCase());
+        }
+      });
+      setFilteredItems(filtered);
+    }
+  };
+
   const renderCategoryTab = ({ item }) => (
     <TouchableOpacity
-      onPress={() => setSelectedCategory(item)}
+      onPress={() => {
+        setSelectedCategory(item);
+        setSearchQuery(''); // Clear the search query when changing categories
+      }}
       style={[
         styles.categoryTab,
         selectedCategory === item && styles.selectedCategoryTab,
@@ -100,39 +104,87 @@ const OrderPage = () => {
   );
 
   const renderOrderItem = ({ item, index }) => (
-    <View key={index} style={styles.orderItem}>
+    <TouchableOpacity
+      key={index}
+      style={styles.orderItem}
+      onPress={() => setSelectedOrderedItem(item)} // Set selected ordered item
+    >
       <Text style={styles.orderItemText}>{item.name}</Text>
       <Text style={styles.orderItemText}>{item.price}</Text>
-      <View style={styles.quantityContainer}>
-        <TouchableOpacity onPress={() => decreaseQuantity(index)} style={styles.quantityButton}>
-          <Text style={styles.quantityButtonText}>-</Text>
-        </TouchableOpacity>
-        <Text style={styles.quantityText}>{item.quantity}</Text>
-        <TouchableOpacity onPress={() => increaseQuantity(index)} style={styles.quantityButton}>
-          <Text style={styles.quantityButtonText}>+</Text>
-        </TouchableOpacity>
-      </View>
+      <Text style={styles.orderItemText}>Qty: {item.quantity}</Text>
+    </TouchableOpacity>
+  );
+
+  const renderSummaryFooter = () => (
+    <View style={styles.summaryFooter}>
+      <Text style={styles.summaryText}>Table:</Text>
+      <Text style={styles.summaryText}>Quantity: {order.reduce((total, item) => total + item.quantity, 0)}</Text>
+      <Text style={{fontSize:18,color:'white'}}>Subtotal: ₹{subtotal.toFixed(2)}</Text>
+    </View>
+  );
+
+  const renderItemActionButtons = () => (
+    <View style={styles.actionButtonContainer}>
+      <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#FFEB3B' }]}>
+        <Text style={styles.actionButtonText}>Void</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#FFA726' }]}>
+        <Text style={styles.actionButtonText}>One More</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#8BC34A' }]}>
+        <Text style={styles.actionButtonText}>Mark</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#7E57C2' }]}>
+        <Text style={styles.actionButtonText}>Transfer</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#4CAF50' }]}>
+        <Text style={styles.actionButtonText}>Discount</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#FF7043' }]}>
+        <Text style={styles.actionButtonText}>Price</Text>
+      </TouchableOpacity>
     </View>
   );
 
   return (
     <View style={styles.container}>
-     
-
-      {/* Item Selection */}
-      <View style={styles.itemSelection}>
-        {/* Category Tabs */}
+      {/* Category Tabs */}
+      <View style={styles.categoryContainer}>
         <FlatList
           data={categories}
-          horizontal
           renderItem={renderCategoryTab}
           keyExtractor={(item) => item}
-          style={styles.categoryList}
-          showsHorizontalScrollIndicator={false}
+          showsVerticalScrollIndicator={false}
         />
-        {/* Item Grid */}
+      </View>
+
+      <View style={styles.itemSelection}>
+        {/* Search Bar */}
+        <View style={styles.searchBarContainer}>
+          {/* <Ionicons name="ios-search" size={20} color="gray" /> */}
+          <TextInput
+            style={styles.searchBar}
+            placeholder={`Search items by ${searchBy}`}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          <TouchableOpacity
+            style={[styles.searchToggleButton, searchBy === 'name' && styles.activeToggleButton]}
+            onPress={() => setSearchBy('name')}
+          >
+            <Text style={styles.searchToggleButtonText}>Name</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.searchToggleButton, searchBy === 'code' && styles.activeToggleButton]}
+            onPress={() => setSearchBy('code')}
+          >
+            <Text style={styles.searchToggleButtonText}>Code</Text>
+          </TouchableOpacity>
+        </View>
+        
+        {/* Filtered Items */}
         <FlatList
-          data={items[selectedCategory]}
+          data={filteredItems}
           renderItem={renderItemCard}
           keyExtractor={(item) => item.id}
           numColumns={3}
@@ -141,22 +193,55 @@ const OrderPage = () => {
           showsVerticalScrollIndicator={false}
         />
       </View>
-       {/* Order Summary */}
-       <View style={styles.orderSummary}>
-      <Text style={styles.header}>Ordering </Text>
-        <FlatList
-          data={order}
-          renderItem={renderOrderItem}
-          keyExtractor={(item, index) => index.toString()}
-          ListEmptyComponent={<Text style={styles.noRecords}>No Records</Text>}
-        />
-        <View style={styles.summaryFooter}>
-          <Text style={styles.summaryText}>Quantity: {order.reduce((total, item) => total + item.quantity, 0)}</Text>
-          <Text style={styles.summaryText}>Subtotal: ${subtotal.toFixed(2)}</Text>
+
+      <View style={styles.orderSummary}>
+        {/* Tabs */}
+        <View style={styles.tabsContainer}>
+          <TouchableOpacity
+            onPress={() => {
+              setActiveTab('Ordering');
+              setSelectedOrderedItem(null); // Reset selected item when switching tabs
+            }}
+            style={[styles.tab, activeTab === 'Ordering' && styles.activeTab]}
+          >
+            <Text style={[styles.tabText, activeTab === 'Ordering' && styles.activeTabText]}>Ordering</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              setActiveTab('Ordered');
+              setSelectedOrderedItem(null); // Reset selected item when switching tabs
+            }}
+            style={[styles.tab, activeTab === 'Ordered' && styles.activeTab]}
+          >
+            <Text style={[styles.tabText, activeTab === 'Ordered' && styles.activeTabText]}>Ordered</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.sendButton}>
-          <Text style={styles.sendButtonText}>Send</Text>
-        </TouchableOpacity>
+
+        {/* Content based on active tab */}
+        {activeTab === 'Ordering' ? (
+          <>
+            <FlatList
+              data={order}
+              renderItem={renderOrderItem}
+              keyExtractor={(item, index) => index.toString()}
+              ListEmptyComponent={<Text style={styles.noRecords}>No Records</Text>}
+            />
+            {renderSummaryFooter()}
+            <TouchableOpacity style={styles.sendButton}>
+              <Text style={styles.sendButtonText}>Send</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <FlatList
+              data={previouslyOrderedItems}
+              renderItem={renderOrderItem}
+              keyExtractor={(item) => item.id}
+              ListEmptyComponent={<Text style={styles.noRecords}>No Records</Text>}
+            />
+            {selectedOrderedItem ? renderItemActionButtons() : renderSummaryFooter()}
+          </>
+        )}
       </View>
     </View>
   );
@@ -167,7 +252,9 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     backgroundColor: '#fff',
-    padding: 10,
+    paddingTop: 10,
+    paddingLeft: 5,
+    paddingBottom: 5,
   },
   orderSummary: {
     flex: 2,
@@ -175,6 +262,10 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
     marginRight: 10,
+  },
+  categoryContainer: {
+    width: 100, // Adjust width as needed
+    marginHorizontal: 5,
   },
   header: {
     fontSize: 20,
@@ -186,32 +277,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 5,
+    paddingVertical: 10,
     borderBottomColor: '#444',
     borderBottomWidth: 1,
   },
   orderItemText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 13,
   },
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   quantityButton: {
-    alignItems:'center',
-    padding: 5,
-    width:30,
+    alignItems: 'center',
+    padding: 4,
+    width: 25,
     backgroundColor: '#f5a623',
     borderRadius: 5,
     marginHorizontal: 5,
   },
   quantityButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
   },
   quantityText: {
-    fontSize: 16,
+    fontSize: 12,
     color: '#fff',
   },
   noRecords: {
@@ -221,50 +312,77 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   summaryFooter: {
-    marginTop: 20,
+    marginTop: 10,
   },
   summaryText: {
     color: '#fff',
-    fontSize: 16,
-    paddingVertical: 5,
+    fontSize: 12,
+    paddingVertical: 3,
   },
   sendButton: {
     backgroundColor: '#f44336',
-    padding: 15,
+    padding: 5,
     borderRadius: 8,
-    marginTop: 20,
+    marginTop: 10,
   },
   sendButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 14,
     textAlign: 'center',
     fontWeight: 'bold',
   },
   itemSelection: {
-    flex: 2,
+    flex: 4,
     backgroundColor: '#f7f7f7',
-    padding: 10,
+    padding: 5,
     borderRadius: 8,
   },
-  categoryList: {
-    zIndex: 1000,
+  searchBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  searchBar: {
+    flex: 1,
+    height: 40,
+    fontSize: 16,
+    marginLeft: 10,
+  },
+  searchToggleButton: {
+    marginLeft: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 5,
+    backgroundColor: '#f5a623',
+  },
+  activeToggleButton: {
+    backgroundColor: '#ffcc00',
+  },
+  searchToggleButtonText: {
+    color: '#fff',
+    fontSize: 14,
   },
   categoryTab: {
     padding: 10,
-    width: 100,
-    height: 50,
     backgroundColor: 'green',
-    marginRight: 5,
+    marginBottom: 5,
     borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   selectedCategoryTab: {
-    borderColor: 'yellow',
+    borderColor: 'gray',
     borderWidth: 2,
   },
   categoryText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 14,
+    color: '#fff',
   },
   selectedCategoryText: {
     fontWeight: 'bold',
@@ -272,31 +390,69 @@ const styles = StyleSheet.create({
   itemGrid: {
     marginTop: 10,
   },
-
   itemRow: {
     justifyContent: 'space-between',
   },
   itemCard: {
     flex: 1,
-    padding: 10,
-    marginBottom: 10,
+    padding: 5,
+    marginBottom: 5,
     backgroundColor: '#fff',
     borderRadius: 5,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 3,
+    elevation: 2,
     borderColor: '#e0e0e0',
     borderWidth: 1,
-    margin:1.5
+    margin: 1.5,
   },
   itemName: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#333',
   },
   itemPrice: {
     fontSize: 14,
     color: '#666',
     marginTop: 5,
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 10,
+  },
+  tab: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
+  activeTab: {
+    backgroundColor: '#f5a623',
+  },
+  tabText: {
+    fontSize: 14,
+    color: '#fff',
+  },
+  activeTabText: {
+    fontWeight: 'bold',
+  },
+  actionButtonContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 5,
+    
+  },
+  actionButton: {
+    flexBasis: '45%',
+    padding: 5,
+    margin: 5,
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 });
 

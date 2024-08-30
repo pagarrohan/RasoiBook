@@ -25,7 +25,7 @@ const TableCard = ({ tableNumber, time, guests, amount, waiter, status }:any) =>
 
 
   const handlePress = () => {
-    navigation.navigate('order', { tableNumber });
+    navigation.navigate('order', { tnumber:tableNumber });
   };
   return (
     <TouchableOpacity onPress={handlePress} style={[styles.card, { backgroundColor: color }]}>

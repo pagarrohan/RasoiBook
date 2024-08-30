@@ -19,65 +19,68 @@ export default function TabLayout() {
 
   return (
     <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
-      }}>
+    screenOptions={{
+      tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+      headerShown: useClientOnlyValue(false, true),
+    }}
+  >
+    <Tabs.Screen
+      name="index"
+      options={{
+        title: 'Dine In',
+        
+        tabBarIcon: ({ color }) => <TabBarIcon name="cutlery" color={'green'} />,
+        headerRight: () => (
+          <Link href="/modal" asChild>
+            <Pressable>
+              {({ pressed }) => (
+                <FontAwesome
+                  name="info-circle"
+                  size={25}
+                  color={Colors[colorScheme ?? 'light'].text}
+                  style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
+                />
+              )}
+            </Pressable>
+          </Link>
+        ),
+      }}
+    />
       <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Dine In',
-          tabBarIcon: ({ color }) => <TabBarIcon name="cutlery" color={'green'} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="order"
-        options={{
-          title: 'Take Away',
-          headerShown: true,
-          tabBarIcon: ({ color }) => <TabBarIcon name="shopping-bag" color={'orange'} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Setting',
-          headerShown: false,
-          tabBarIcon: ({ color }) => <TabBarIcon name="gear" color={'pink'} />,
-        }}
-      />
-      <Tabs.Screen
-        name="print"
-        options={{
-          title: 'Print',
-          headerShown: false,
-          tabBarIcon: ({ color }) => <TabBarIcon name="print" color={'yellow'} />,
-        }}
-      />
-           <Tabs.Screen
-        name="print1"
-        options={{
-          title: 'Print1',
-          headerShown: false,
-          tabBarIcon: ({ color }) => <TabBarIcon name="print" color={'magenta'} />,
-        }}
-      />
-    </Tabs>
+    name="order"
+    options={({ navigation }) => ({
+      headerTitle: '', // Removes the title from the header
+      headerShown: false,
+      headerLeft: () => (
+        <Pressable onPress={() => navigation.goBack()}>
+          <FontAwesome
+            name="arrow-left"
+            size={12}
+            color={Colors[colorScheme ?? 'light'].text}
+            style={{ marginLeft: 15 }}
+          />
+        </Pressable>
+      ),
+      tabBarStyle: { display: 'none' }, // Hides the tab bar on this screen
+      tabBarIcon: ({ color }) => <TabBarIcon name="shopping-bag" color={'orange'} />,
+    })}
+  />
+    <Tabs.Screen
+      name="settings"
+      options={{
+        title: 'Setting',
+        headerShown: false,
+        tabBarIcon: ({ color }) => <TabBarIcon name="gear" color={'pink'} />,
+      }}
+    />
+    <Tabs.Screen
+      name="print"
+      options={{
+        title: 'Print',
+        headerShown: false,
+        tabBarIcon: ({ color }) => <TabBarIcon name="print" color={'yellow'} />,
+      }}
+    />
+  </Tabs>
   );
 }
