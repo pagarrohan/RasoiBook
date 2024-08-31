@@ -49,6 +49,7 @@ export default function TabLayout() {
       <Tabs.Screen
     name="order"
     options={({ navigation }) => ({
+      title: 'Quick',
       headerTitle: '', // Removes the title from the header
       headerShown: false,
       headerLeft: () => (

@@ -2,7 +2,7 @@
 import { useNavigation } from 'expo-router';
 import React from 'react';
 import { View, Text, FlatList, StyleSheet, useWindowDimensions, TouchableOpacity } from 'react-native';
-
+import {data} from '../db'
 // Function to determine the card color based on the status
 const getStatusColor = (status:string) => {
   switch (status) {
@@ -47,32 +47,7 @@ const RestaurantTables = () => {
 
   const numColumns = isPortrait ? 3 : 4;
 
-  const data = [
-    { id: '111', tableNumber: 'abcde', time: '01:23 PM', guests: '1', amount: '$176.00', waiter: 'Admin', status: 'closed' },
-    { id: '222', tableNumber: '102', time: '08:02 AM', guests: '2', amount: '$98.00', waiter: 'Admin', status: 'closed' },
-    { id: '333', tableNumber: '103', time: '', guests: '', amount: '', waiter: '', status: 'closed' },
-    { id: '4333', tableNumber: '104', time: '01:24 PM', guests: '2', amount: '$30.00', waiter: 'Admin', status: 'printed' },
-    { id: '533', tableNumber: '105', time: '', guests: '', amount: '', waiter: '', status: 'closed' },
-    { id: '633', tableNumber: '106', time: '', guests: '', amount: '', waiter: '', status: 'closed' },
-    { id: '7333', tableNumber: '107', time: '', guests: '', amount: '', waiter: '', status: 'closed' },
-    { id: '8333', tableNumber: '108', time: '', guests: '', amount: '', waiter: '', status: 'closed' },
-    { id: '9333', tableNumber: '109', time: '01:24 PM', guests: '1', amount: '$111.00', waiter: 'Admin', status: 'held' },
-    { id: '1033', tableNumber: '110', time: '', guests: '', amount: '', waiter: '', status: 'default' },
-    { id: '1133', tableNumber: '111', time: '', guests: '', amount: '', waiter: '', status: 'default' },
-    { id: '123', tableNumber: '112', time: '03:55 PM', guests: '2', amount: '$15.00', waiter: 'Admin', status: 'closed' },
-    { id: '133', tableNumber: 'qwe', time: '01:23 PM', guests: '1', amount: '$176.00', waiter: 'Admin', status: 'closed' },
-    { id: '233', tableNumber: '102', time: '08:02 AM', guests: '2', amount: '$98.00', waiter: 'Admin', status: 'closed' },
-    { id: '3333', tableNumber: '103', time: '', guests: '', amount: '', waiter: '', status: 'default' },
-    { id: '43', tableNumber: '104', time: '01:24 PM', guests: '2', amount: '$30.00', waiter: 'Admin', status: 'printed' },
-    { id: '533', tableNumber: '105', time: '', guests: '', amount: '', waiter: '', status: 'closed' },
-    { id: '633', tableNumber: '106', time: '', guests: '', amount: '', waiter: '', status: 'default' },
-    { id: '733', tableNumber: '107', time: '', guests: '', amount: '', waiter: '', status: 'default' },
-    { id: '8333', tableNumber: '108', time: '', guests: '', amount: '', waiter: '', status: 'default' },
-    { id: '9333', tableNumber: '109', time: '01:24 PM', guests: '1', amount: '$111.00', waiter: 'Admin', status: 'held' },
-    { id: '1033', tableNumber: '110', time: '', guests: '', amount: '', waiter: '', status: 'default' },
-    { id: '11333', tableNumber: '111', time: '', guests: '', amount: '', waiter: '', status: 'default' },
-    { id: '1332', tableNumber: '112', time: '03:55 PM', guests: '2', amount: '$15.00', waiter: 'Admin', status: 'closed' },
-  ];
+ 
 
   const renderItem = ({ item }) => (
     <TableCard

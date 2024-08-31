@@ -12,6 +12,7 @@ const OrderPage = () => {
   const [filteredItems, setFilteredItems] = useState(items[selectedCategory]); // State for filtered items
   const [searchBy, setSearchBy] = useState('name'); // State to toggle between search by name or code
   const [selectedOrderedItem, setSelectedOrderedItem] = useState(null); // State for selected ordered item
+  const [selectedOrderingItem, setSelectedOrderingItem] = useState(null); // State for selected ordering item
 
   useEffect(() => {
     filterItems(searchQuery); // Filter items based on the search query
@@ -107,7 +108,15 @@ const OrderPage = () => {
     <TouchableOpacity
       key={index}
       style={styles.orderItem}
-      onPress={() => setSelectedOrderedItem(item)} // Set selected ordered item
+      onPress={() => {
+        if (activeTab === 'Ordering') {
+          setSelectedOrderingItem(item);
+          setSelectedOrderedItem(null);
+        } else {
+          setSelectedOrderedItem(item);
+          setSelectedOrderingItem(null);
+        }
+      }} // Set selected item based on active tab
     >
       <Text style={styles.orderItemText}>{item.name}</Text>
       <Text style={styles.orderItemText}>{item.price}</Text>
@@ -119,29 +128,71 @@ const OrderPage = () => {
     <View style={styles.summaryFooter}>
       <Text style={styles.summaryText}>Table:</Text>
       <Text style={styles.summaryText}>Quantity: {order.reduce((total, item) => total + item.quantity, 0)}</Text>
-      <Text style={{fontSize:18,color:'white'}}>Subtotal: ₹{subtotal.toFixed(2)}</Text>
+      <Text style={styles.summaryText}>Subtotal: ₹{subtotal.toFixed(2)}</Text>
+      {activeTab === 'Ordering' && <TouchableOpacity style={styles.sendButton}>
+        <Text style={styles.sendButtonText}>KOT</Text>
+      </TouchableOpacity>}
+    </View>
+
+  );
+
+  const renderOrderingActionButtons = () => (
+    <View style={styles.actionButtonContainer}>
+      <TouchableOpacity
+        style={[styles.actionButton, { backgroundColor: '#FF7043' }]}
+        onPress={() => {
+          // Implement Clear functionality
+          const index = order.findIndex(orderItem => orderItem.id === selectedOrderingItem.id);
+          if (index > -1) {
+            removeItemFromOrder(index);
+            setSelectedOrderingItem(null);
+          }
+        }}
+      >
+        <Text style={styles.actionButtonText}>Clear</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.actionButton, { backgroundColor: '#FFEB3B' }]}
+        onPress={() => {
+          // Implement Quantity functionality
+          // You can add a modal or prompt to change the quantity
+          alert(`Set Quantity for ${selectedOrderingItem.name}`);
+        }}
+      >
+        <Text style={styles.actionButtonText}>Quantity</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.actionButton, { backgroundColor: '#8BC34A' }]}
+        onPress={() => {
+          // Implement Kitchen Note functionality
+          // You can add a modal or prompt to add a kitchen note
+          alert(`Add Kitchen Note for ${selectedOrderingItem.name}`);
+        }}
+      >
+        <Text style={styles.actionButtonText}>Kitchen Note</Text>
+      </TouchableOpacity>
     </View>
   );
 
   const renderItemActionButtons = () => (
-    <View style={styles.actionButtonContainer}>
-      <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#FFEB3B' }]}>
-        <Text style={styles.actionButtonText}>Void</Text>
+    <View style={styles.actionButtonContainerOrderd}>
+      <TouchableOpacity style={[styles.actionButtonOrderd, { backgroundColor: '#FFEB3B' }]}>
+        <Text style={styles.actionButtonTextOrderd}>Void</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#FFA726' }]}>
-        <Text style={styles.actionButtonText}>One More</Text>
+      <TouchableOpacity style={[styles.actionButtonOrderd, { backgroundColor: '#FFA726' }]}>
+        <Text style={styles.actionButtonTextOrderd}>One More</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#8BC34A' }]}>
-        <Text style={styles.actionButtonText}>Mark</Text>
+      <TouchableOpacity style={[styles.actionButtonOrderd, { backgroundColor: '#8BC34A' }]}>
+        <Text style={styles.actionButtonTextOrderd}>Mark</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#7E57C2' }]}>
-        <Text style={styles.actionButtonText}>Transfer</Text>
+      <TouchableOpacity style={[styles.actionButtonOrderd, { backgroundColor: '#7E57C2' }]}>
+        <Text style={styles.actionButtonTextOrderd}>Transfer</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#4CAF50' }]}>
-        <Text style={styles.actionButtonText}>Discount</Text>
+      <TouchableOpacity style={[styles.actionButtonOrderd, { backgroundColor: '#4CAF50' }]}>
+        <Text style={styles.actionButtonTextOrderd}>Discount</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#FF7043' }]}>
-        <Text style={styles.actionButtonText}>Price</Text>
+      <TouchableOpacity style={[styles.actionButtonOrderd, { backgroundColor: '#FF7043' }]}>
+        <Text style={styles.actionButtonTextOrderd}>Price</Text>
       </TouchableOpacity>
     </View>
   );
@@ -161,7 +212,6 @@ const OrderPage = () => {
       <View style={styles.itemSelection}>
         {/* Search Bar */}
         <View style={styles.searchBarContainer}>
-          {/* <Ionicons name="ios-search" size={20} color="gray" /> */}
           <TextInput
             style={styles.searchBar}
             placeholder={`Search items by ${searchBy}`}
@@ -181,7 +231,7 @@ const OrderPage = () => {
             <Text style={styles.searchToggleButtonText}>Code</Text>
           </TouchableOpacity>
         </View>
-        
+
         {/* Filtered Items */}
         <FlatList
           data={filteredItems}
@@ -200,7 +250,7 @@ const OrderPage = () => {
           <TouchableOpacity
             onPress={() => {
               setActiveTab('Ordering');
-              setSelectedOrderedItem(null); // Reset selected item when switching tabs
+              setSelectedOrderingItem(null); // Reset selected item when switching tabs
             }}
             style={[styles.tab, activeTab === 'Ordering' && styles.activeTab]}
           >
@@ -226,10 +276,7 @@ const OrderPage = () => {
               keyExtractor={(item, index) => index.toString()}
               ListEmptyComponent={<Text style={styles.noRecords}>No Records</Text>}
             />
-            {renderSummaryFooter()}
-            <TouchableOpacity style={styles.sendButton}>
-              <Text style={styles.sendButtonText}>Send</Text>
-            </TouchableOpacity>
+            {selectedOrderingItem ? renderOrderingActionButtons() : renderSummaryFooter()}
           </>
         ) : (
           <>
@@ -438,11 +485,11 @@ const styles = StyleSheet.create({
   actionButtonContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 5,
-    
+    marginTop: 10,
+    justifyContent: 'space-between',
   },
   actionButton: {
-    flexBasis: '45%',
+    flexBasis: '45%', // Adjust to fit 2x2 layout
     padding: 5,
     margin: 5,
     borderRadius: 5,
@@ -450,6 +497,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   actionButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  actionButtonContainerOrderd: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 5,
+    // justifyContent: 'space-between',
+  },
+  actionButtonOrderd: {
+    flexBasis: '45%',
+    padding: 5,
+    margin: 5,
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionButtonTextOrderd: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 14,
