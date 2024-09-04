@@ -2,7 +2,8 @@
 import { useNavigation } from 'expo-router';
 import React from 'react';
 import { View, Text, FlatList, StyleSheet, useWindowDimensions, TouchableOpacity } from 'react-native';
-import {data} from '../db'
+import {data} from '../../../components/db'
+import { SafeAreaView } from 'react-native-safe-area-context';
 // Function to determine the card color based on the status
 const getStatusColor = (status:string) => {
   switch (status) {
@@ -61,7 +62,8 @@ const RestaurantTables = () => {
   );
 
   return (
-    <View style={styles.container}>
+  <SafeAreaView style={styles.safeArea}>
+      <View>
       <FlatList
         data={data}
         renderItem={renderItem}
@@ -71,10 +73,16 @@ const RestaurantTables = () => {
         key={numColumns} // To trigger re-render on orientation change
       />
     </View>
+  </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    marginTop:-25,
+    backgroundColor: '#fff',  // Adjust the background color as needed
+  },
   container: {
     flex: 1,
     backgroundColor: '#f0f0f0',

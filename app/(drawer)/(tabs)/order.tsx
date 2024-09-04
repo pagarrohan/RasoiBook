@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
+import { View,ScrollView, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // Add this import for icons
-import { categories, items, previouslyOrderedItems } from '../db';
+import { categories, items, previouslyOrderedItems } from '../../../components/db';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+
+
 
 const OrderPage = () => {
   const [selectedCategory, setSelectedCategory] = useState(categories[0]); // Default to the first category
@@ -198,9 +202,16 @@ const OrderPage = () => {
   );
 
   return (
-    <View style={styles.container}>
-      {/* Category Tabs */}
-      <View style={styles.categoryContainer}>
+   
+  <SafeAreaView style={styles.safeArea}>
+  <View>
+  <HorizontalStrip></HorizontalStrip>
+  </View>
+
+      <View style={styles.container}>
+
+      {/* Category Tabs */} 
+      <View style={styles.categoryContainer}>  
         <FlatList
           data={categories}
           renderItem={renderCategoryTab}
@@ -291,15 +302,22 @@ const OrderPage = () => {
         )}
       </View>
     </View>
+  </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff', 
+    // marginTop:-25,
+    // Adjust the background color as needed
+  },
   container: {
     flex: 1,
     flexDirection: 'row',
     backgroundColor: '#fff',
-    paddingTop: 10,
+    paddingTop: 0,
     paddingLeft: 5,
     paddingBottom: 5,
   },
@@ -369,7 +387,7 @@ const styles = StyleSheet.create({
   sendButton: {
     backgroundColor: '#f44336',
     padding: 5,
-    borderRadius: 8,
+    borderRadius: 1,
     marginTop: 10,
   },
   sendButtonText: {
@@ -385,26 +403,28 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   searchBarContainer: {
+    marginTop:-5,
     flexDirection: 'row',
+    maxHeight:40,
     alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 5,
-    paddingHorizontal: 10,
+    paddingHorizontal: 5,
     paddingVertical: 5,
-    marginBottom: 10,
-    borderWidth: 1,
+    // marginBottom: 10,
+    borderWidth: 0.5,
     borderColor: '#ccc',
   },
   searchBar: {
     flex: 1,
-    height: 40,
-    fontSize: 16,
+    maxHeight: 20,
+    fontSize: 14,
     marginLeft: 10,
   },
   searchToggleButton: {
     marginLeft: 10,
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 0,
     borderRadius: 5,
     backgroundColor: '#f5a623',
   },
@@ -419,12 +439,12 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: 'green',
     marginBottom: 5,
-    borderRadius: 5,
+    borderRadius: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   selectedCategoryTab: {
-    borderColor: 'gray',
+    borderColor: 'orange',
     borderWidth: 2,
   },
   categoryText: {
@@ -435,7 +455,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   itemGrid: {
-    marginTop: 10,
+    marginTop: 3,
   },
   itemRow: {
     justifyContent: 'space-between',
@@ -523,3 +543,115 @@ const styles = StyleSheet.create({
 });
 
 export default OrderPage;
+
+
+
+
+ function HorizontalStrip() {
+  const elements = [
+    { label: '', backgroundColor: '1a353',icon: 'arrow-back-sharp' },
+    { label: 'Customer', backgroundColor: '#66cdaa',icon: 'person-add-outline' },
+    { label: 'Staff', backgroundColor: '#8bc34a' ,icon: 'man-outline'},
+    { label: 'Receipt', backgroundColor: '#cddc39',icon: 'print-outline' },
+    { label: 'KOT', backgroundColor: '#ffeb3b', icon: 'receipt-outline' },
+    { label: 'Transfer', backgroundColor: '#ff9800', icon: 'swap-horizontal-outline' },
+    { label: 'Combine', backgroundColor: '#9c27b0' , icon: 'sync-outline'},
+    { label: 'Priority', backgroundColor: '#4bc34a', icon: 'speedometer-outline' },
+    { label: 'Void', backgroundColor: '#ff9800',icon:'trash-outline' },
+
+  ];
+
+  const handlePress = (label:string) => {
+    // Handle the press event for each item
+    switch (label) {
+      case '':
+        // Perform action for Delivery
+        router.back()
+        break;
+      case 'Customer':
+        // Perform action for Takeout
+        Alert.alert('Takeout Pressed', 'You pressed the Takeout option.');
+        break;
+        case 'Staff':
+        // Perform action for Takeout
+        Alert.alert('Takeout Pressed', 'You pressed the Takeout option.');
+        break;
+      case 'Receipt':
+        // Perform action for Tab
+        Alert.alert('Tab Pressed', 'You pressed the Tab option.');
+        break;
+      case 'KOT':
+        // Perform action for Unpaid
+        Alert.alert('Unpaid Pressed', 'You pressed the Unpaid option.');
+        break;
+      case 'Transfer':
+        // Perform action for Drawer
+        Alert.alert('Drawer Pressed', 'You pressed the Drawer option.');
+        break;
+      case 'Combine':
+        // Perform action for Print Error
+        Alert.alert('Print Error Pressed', 'You pressed the Print Error option.');
+        break;
+      case 'Priority':
+        // Perform action for More
+        Alert.alert('More Pressed', 'You pressed the More option.');
+        break;
+      default:
+        console.log(`No specific action for ${label}`);
+    }
+  };
+
+  return (
+    <ScrollView
+    horizontal 
+    showsHorizontalScrollIndicator={false} 
+    contentContainerStyle={[stylesStrip.scrollView, { flex: elements.length > 5 ? 0 : 1 }]}
+  >
+      {elements.map((element, index) => (
+         <TouchableOpacity 
+         key={index} 
+         style={[
+           stylesStrip.item, 
+           { backgroundColor: element.backgroundColor, flex: elements.length > 5 ? 0 : 1 },
+           index === 0 && { width:30 } 
+         ]}
+         onPress={() => handlePress(element.label)}  // Add onPress functionality
+       >
+           <Ionicons name={element.icon} size={20} color="black" style={stylesStrip.icon} />  
+          <Text style={stylesStrip.itemText}>{element.label}</Text>
+          </TouchableOpacity>
+      ))}
+    </ScrollView>
+  );
+}
+
+const stylesStrip = StyleSheet.create({
+  scrollView: {
+    display:'flex',
+    flex:1,
+    marginVertical: 0,
+    marginHorizontal:5,
+    flexDirection: 'row',
+    maxHeight:35,
+    marginBottom:10
+    // backgroundColor:'red'
+  },
+  item: {
+    flexDirection:'row',
+    width: 100,
+    height: 35,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 3,
+    borderRadius: 1,
+    flex:1
+  },
+  itemText: {
+    color: '#000',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  icon: {
+    marginRight: 5, // Space between icon and text
+  }
+});

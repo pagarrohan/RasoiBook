@@ -15,9 +15,9 @@ import {
 import { BluetoothManager } from 'react-native-bluetooth-escpos-printer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PERMISSIONS, requestMultiple, RESULTS } from 'react-native-permissions';
-import ItemList from '../bluetooth/ItemList';
-import SamplePrint from '../bluetooth/SamplePrint';
-import { styles } from '../bluetooth/styles';
+import ItemList from '../../../components/bluetooth/ItemList';
+import SamplePrint from '../../../components/bluetooth/SamplePrint';
+import { styles } from '../../../components/bluetooth/styles';
 
 const App = () => {
   const [pairedDevices, setPairedDevices] = useState([]);
