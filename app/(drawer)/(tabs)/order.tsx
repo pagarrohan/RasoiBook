@@ -1,15 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { View,ScrollView, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
+import { View, ScrollView, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // Add this import for icons
-import { categories, items, previouslyOrderedItems } from '../../../components/db';
+import { categories, items } from '../../../components/db';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-
-
-
+import { useLocalSearchParams } from 'expo-router';
+import { useDispatch } from 'react-redux';
+import uuid from 'react-native-uuid';
+import { saveOrder } from '@/redux/slice/orderSlice';
+import { RootState } from '@/redux/store/store';
+import { useSelector } from 'react-redux';
+import { useIsFocused } from '@react-navigation/native';
+import SamplePrint from '../../../components/bluetooth/SamplePrint';
 const OrderPage = () => {
   const [selectedCategory, setSelectedCategory] = useState(categories[0]); // Default to the first category
-  const [order, setOrder] = useState([]);
+  const [order, setOrder] = useState<any>([]);
   const [subtotal, setSubtotal] = useState(0);
   const [activeTab, setActiveTab] = useState('Ordering');
   const [searchQuery, setSearchQuery] = useState(''); // State for search query
@@ -17,6 +22,28 @@ const OrderPage = () => {
   const [searchBy, setSearchBy] = useState('name'); // State to toggle between search by name or code
   const [selectedOrderedItem, setSelectedOrderedItem] = useState(null); // State for selected ordered item
   const [selectedOrderingItem, setSelectedOrderingItem] = useState(null); // State for selected ordering item
+  const { tableId } = useLocalSearchParams();  // Use this to get tableId from URL params
+
+  const dispatch = useDispatch();
+  const isFocused = useIsFocused()
+
+  const orders = useSelector((state: RootState) => state.orders);
+ 
+  // Filter orders for the current table
+  const currentTableOrders = orders.filter(order => order?.tableNumber === parseInt(`${tableId}`));
+console.log("currentTableOrders",currentTableOrders);
+
+  useEffect(() => {
+
+    if (isFocused && currentTableOrders.length > 0) {
+      setActiveTab('Ordered');
+    } else {
+      setActiveTab('Ordering');
+      setOrder([])
+      setSubtotal(0)
+    }
+
+  }, [isFocused])
 
   useEffect(() => {
     filterItems(searchQuery); // Filter items based on the search query
@@ -31,12 +58,12 @@ const OrderPage = () => {
       updateSubtotal(updatedOrder);
     } else {
       setOrder([...order, { ...item, quantity: 1 }]);
-      setSubtotal(subtotal + parseFloat(item.price.replace('₹', '')));
+      setSubtotal(subtotal + item.price);
     }
   };
 
   const updateSubtotal = (updatedOrder) => {
-    const newSubtotal = updatedOrder.reduce((total, item) => total + (parseFloat(item.price.replace('₹', '')) * item.quantity), 0);
+    const newSubtotal = updatedOrder.reduce((total, item) => total + (item.price * item.quantity), 0);
     setSubtotal(newSubtotal);
   };
 
@@ -79,6 +106,24 @@ const OrderPage = () => {
     }
   };
 
+  const handleSaveOrder = () => {
+    const orderId = uuid.v4();  // Generate a unique order ID
+
+    const orderDetails = {
+      orderId: orderId as string,
+      tableNumber: parseInt(`${tableId}`),
+      waiterName: 'Ramesh',  // You can make this dynamic based on your app's logic
+      date: new Date().toISOString(),
+      customer: { name: 'Jane Smith', contact: '123-456-7890' },  // Example, replace with actual customer details
+      items: order,
+      total: subtotal,
+      status:"occupied"
+    };
+
+    dispatch(saveOrder(orderDetails));  // Save the order in Redux
+    setOrder([]) // Mark table as occupied
+    router.back();  // Navigate back to the tables page
+  };
   const renderCategoryTab = ({ item }) => (
     <TouchableOpacity
       onPress={() => {
@@ -102,7 +147,10 @@ const OrderPage = () => {
   );
 
   const renderItemCard = ({ item }) => (
-    <TouchableOpacity onPress={() => addItemToOrder(item)} style={styles.itemCard}>
+    <TouchableOpacity onPress={() => {
+      setActiveTab('Ordering')
+      addItemToOrder(item)
+    }} style={styles.itemCard}>
       <Text style={styles.itemName}>{item.name}</Text>
       <Text style={styles.itemPrice}>{item.price}</Text>
     </TouchableOpacity>
@@ -123,19 +171,22 @@ const OrderPage = () => {
       }} // Set selected item based on active tab
     >
       <Text style={styles.orderItemText}>{item.name}</Text>
-      <Text style={styles.orderItemText}>{item.price}</Text>
       <Text style={styles.orderItemText}>Qty: {item.quantity}</Text>
+      <Text style={styles.orderItemText}>{item.price}</Text>
     </TouchableOpacity>
   );
 
   const renderSummaryFooter = () => (
     <View style={styles.summaryFooter}>
-      <Text style={styles.summaryText}>Table:</Text>
+      <Text style={styles.summaryText}>Table:{tableId}</Text>
       <Text style={styles.summaryText}>Quantity: {order.reduce((total, item) => total + item.quantity, 0)}</Text>
-      <Text style={styles.summaryText}>Subtotal: ₹{subtotal.toFixed(2)}</Text>
-      {activeTab === 'Ordering' && <TouchableOpacity style={styles.sendButton}>
-        <Text style={styles.sendButtonText}>KOT</Text>
+      <Text style={styles.summaryText}>Subtotal: {subtotal}</Text>
+      {activeTab === 'Ordering' && <TouchableOpacity style={styles.sendButton} onPress={handleSaveOrder}>
+        <Text style={styles.sendButtonText}>Send</Text>
+    
+
       </TouchableOpacity>}
+      {currentTableOrders.length>0&&<SamplePrint order={currentTableOrders} />}
     </View>
 
   );
@@ -202,114 +253,117 @@ const OrderPage = () => {
   );
 
   return (
-   
-  <SafeAreaView style={styles.safeArea}>
-  <View>
-  <HorizontalStrip></HorizontalStrip>
-  </View>
+
+    <SafeAreaView style={styles.safeArea}>
+      <View>
+        <HorizontalStrip></HorizontalStrip>
+      </View>
 
       <View style={styles.container}>
 
-      {/* Category Tabs */} 
-      <View style={styles.categoryContainer}>  
-        <FlatList
-          data={categories}
-          renderItem={renderCategoryTab}
-          keyExtractor={(item) => item}
-          showsVerticalScrollIndicator={false}
-        />
-      </View>
-
-      <View style={styles.itemSelection}>
-        {/* Search Bar */}
-        <View style={styles.searchBarContainer}>
-          <TextInput
-            style={styles.searchBar}
-            placeholder={`Search items by ${searchBy}`}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
+        {/* Category Tabs */}
+        <View style={styles.categoryContainer}>
+          <FlatList
+            data={categories}
+            renderItem={renderCategoryTab}
+            keyExtractor={(item) => item}
+            showsVerticalScrollIndicator={false}
           />
-          <TouchableOpacity
-            style={[styles.searchToggleButton, searchBy === 'name' && styles.activeToggleButton]}
-            onPress={() => setSearchBy('name')}
-          >
-            <Text style={styles.searchToggleButtonText}>Name</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.searchToggleButton, searchBy === 'code' && styles.activeToggleButton]}
-            onPress={() => setSearchBy('code')}
-          >
-            <Text style={styles.searchToggleButtonText}>Code</Text>
-          </TouchableOpacity>
         </View>
 
-        {/* Filtered Items */}
-        <FlatList
-          data={filteredItems}
-          renderItem={renderItemCard}
-          keyExtractor={(item) => item.id}
-          numColumns={3}
-          columnWrapperStyle={styles.itemRow}
-          style={styles.itemGrid}
-          showsVerticalScrollIndicator={false}
-        />
-      </View>
+        <View style={styles.itemSelection}>
+          {/* Search Bar */}
+          <View style={styles.searchBarContainer}>
+            <TextInput
+              style={styles.searchBar}
+              placeholder={`Search items by ${searchBy}`}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            <TouchableOpacity
+              style={[styles.searchToggleButton, searchBy === 'name' && styles.activeToggleButton]}
+              onPress={() => setSearchBy('name')}
+            >
+              <Text style={styles.searchToggleButtonText}>Name</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.searchToggleButton, searchBy === 'code' && styles.activeToggleButton]}
+              onPress={() => setSearchBy('code')}
+            >
+              <Text style={styles.searchToggleButtonText}>Code</Text>
+            </TouchableOpacity>
+          </View>
 
-      <View style={styles.orderSummary}>
-        {/* Tabs */}
-        <View style={styles.tabsContainer}>
-          <TouchableOpacity
-            onPress={() => {
-              setActiveTab('Ordering');
-              setSelectedOrderingItem(null); // Reset selected item when switching tabs
-            }}
-            style={[styles.tab, activeTab === 'Ordering' && styles.activeTab]}
-          >
-            <Text style={[styles.tabText, activeTab === 'Ordering' && styles.activeTabText]}>Ordering</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              setActiveTab('Ordered');
-              setSelectedOrderedItem(null); // Reset selected item when switching tabs
-            }}
-            style={[styles.tab, activeTab === 'Ordered' && styles.activeTab]}
-          >
-            <Text style={[styles.tabText, activeTab === 'Ordered' && styles.activeTabText]}>Ordered</Text>
-          </TouchableOpacity>
+          {/* Filtered Items */}
+          <FlatList
+            data={filteredItems}
+            renderItem={renderItemCard}
+            keyExtractor={(item) => item.id}
+            numColumns={3}
+            columnWrapperStyle={styles.itemRow}
+            style={styles.itemGrid}
+            showsVerticalScrollIndicator={false}
+          />
         </View>
 
-        {/* Content based on active tab */}
-        {activeTab === 'Ordering' ? (
-          <>
-            <FlatList
-              data={order}
-              renderItem={renderOrderItem}
-              keyExtractor={(item, index) => index.toString()}
-              ListEmptyComponent={<Text style={styles.noRecords}>No Records</Text>}
-            />
-            {selectedOrderingItem ? renderOrderingActionButtons() : renderSummaryFooter()}
-          </>
-        ) : (
-          <>
-            <FlatList
-              data={previouslyOrderedItems}
-              renderItem={renderOrderItem}
-              keyExtractor={(item) => item.id}
-              ListEmptyComponent={<Text style={styles.noRecords}>No Records</Text>}
-            />
-            {selectedOrderedItem ? renderItemActionButtons() : renderSummaryFooter()}
-          </>
-        )}
+        <View style={styles.orderSummary}>
+          {/* Tabs */}
+          <View style={styles.tabsContainer}>
+            <TouchableOpacity
+              onPress={() => {
+
+                setActiveTab('Ordering');
+                setSelectedOrderingItem(null); // Reset selected item when switching tabs
+              }}
+              style={[styles.tab, activeTab === 'Ordering' && styles.activeTab]}
+            >
+              <Text style={[styles.tabText, activeTab === 'Ordering' && styles.activeTabText]}>Ordering</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+
+
+                setActiveTab('Ordered');
+                setSelectedOrderedItem(null); // Reset selected item when switching tabs
+              }}
+              style={[styles.tab, activeTab === 'Ordered' && styles.activeTab]}
+            >
+              <Text style={[styles.tabText, activeTab === 'Ordered' && styles.activeTabText]}>Ordered</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Content based on active tab */}
+          {activeTab === 'Ordering' ? (
+            <>
+              <FlatList
+                data={order}
+                renderItem={renderOrderItem}
+                keyExtractor={(item, index) => index.toString()}
+                ListEmptyComponent={<Text style={styles.noRecords}>No Records</Text>}
+              />
+              {selectedOrderingItem ? renderOrderingActionButtons() : renderSummaryFooter()}
+            </>
+          ) : (
+            <>
+              <FlatList
+                data={currentTableOrders.length > 0 ? currentTableOrders[0].items : []}
+                renderItem={renderOrderItem}
+                keyExtractor={(item) => item.id}
+                ListEmptyComponent={<Text style={styles.noRecords}>No Records</Text>}
+              />
+              {selectedOrderedItem ? renderItemActionButtons() : renderSummaryFooter()}
+            </>
+          )}
+        </View>
       </View>
-    </View>
-  </SafeAreaView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff', 
+    backgroundColor: '#fff',
     // marginTop:-25,
     // Adjust the background color as needed
   },
@@ -322,7 +376,7 @@ const styles = StyleSheet.create({
     paddingBottom: 5,
   },
   orderSummary: {
-    flex: 2,
+    flex: 2.5,
     backgroundColor: '#2b2b2b',
     padding: 10,
     borderRadius: 8,
@@ -403,9 +457,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   searchBarContainer: {
-    marginTop:-5,
+    marginTop: -5,
     flexDirection: 'row',
-    maxHeight:40,
+    maxHeight: 40,
     alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 5,
@@ -547,21 +601,21 @@ export default OrderPage;
 
 
 
- function HorizontalStrip() {
+function HorizontalStrip() {
   const elements = [
-    { label: '', backgroundColor: '1a353',icon: 'arrow-back-sharp' },
-    { label: 'Customer', backgroundColor: '#66cdaa',icon: 'person-add-outline' },
-    { label: 'Staff', backgroundColor: '#8bc34a' ,icon: 'man-outline'},
-    { label: 'Receipt', backgroundColor: '#cddc39',icon: 'print-outline' },
+    { label: '', backgroundColor: '1a353', icon: 'arrow-back-sharp' },
+    { label: 'Customer', backgroundColor: '#66cdaa', icon: 'person-add-outline' },
+    { label: 'Staff', backgroundColor: '#8bc34a', icon: 'man-outline' },
+    { label: 'Receipt', backgroundColor: '#cddc39', icon: 'print-outline' },
     { label: 'KOT', backgroundColor: '#ffeb3b', icon: 'receipt-outline' },
     { label: 'Transfer', backgroundColor: '#ff9800', icon: 'swap-horizontal-outline' },
-    { label: 'Combine', backgroundColor: '#9c27b0' , icon: 'sync-outline'},
+    { label: 'Combine', backgroundColor: '#9c27b0', icon: 'sync-outline' },
     { label: 'Priority', backgroundColor: '#4bc34a', icon: 'speedometer-outline' },
-    { label: 'Void', backgroundColor: '#ff9800',icon:'trash-outline' },
+    { label: 'Void', backgroundColor: '#ff9800', icon: 'trash-outline' },
 
   ];
 
-  const handlePress = (label:string) => {
+  const handlePress = (label: string) => {
     // Handle the press event for each item
     switch (label) {
       case '':
@@ -572,7 +626,7 @@ export default OrderPage;
         // Perform action for Takeout
         Alert.alert('Takeout Pressed', 'You pressed the Takeout option.');
         break;
-        case 'Staff':
+      case 'Staff':
         // Perform action for Takeout
         Alert.alert('Takeout Pressed', 'You pressed the Takeout option.');
         break;
@@ -603,23 +657,23 @@ export default OrderPage;
 
   return (
     <ScrollView
-    horizontal 
-    showsHorizontalScrollIndicator={false} 
-    contentContainerStyle={[stylesStrip.scrollView, { flex: elements.length > 5 ? 0 : 1 }]}
-  >
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={[stylesStrip.scrollView, { flex: elements.length > 5 ? 0 : 1 }]}
+    >
       {elements.map((element, index) => (
-         <TouchableOpacity 
-         key={index} 
-         style={[
-           stylesStrip.item, 
-           { backgroundColor: element.backgroundColor, flex: elements.length > 5 ? 0 : 1 },
-           index === 0 && { width:30 } 
-         ]}
-         onPress={() => handlePress(element.label)}  // Add onPress functionality
-       >
-           <Ionicons name={element.icon} size={20} color="black" style={stylesStrip.icon} />  
+        <TouchableOpacity
+          key={index}
+          style={[
+            stylesStrip.item,
+            { backgroundColor: element.backgroundColor, flex: elements.length > 5 ? 0 : 1 },
+            index === 0 && { width: 30 }
+          ]}
+          onPress={() => handlePress(element.label)}  // Add onPress functionality
+        >
+          <Ionicons name={element.icon} size={20} color="black" style={stylesStrip.icon} />
           <Text style={stylesStrip.itemText}>{element.label}</Text>
-          </TouchableOpacity>
+        </TouchableOpacity>
       ))}
     </ScrollView>
   );
@@ -627,24 +681,24 @@ export default OrderPage;
 
 const stylesStrip = StyleSheet.create({
   scrollView: {
-    display:'flex',
-    flex:1,
+    display: 'flex',
+    flex: 1,
     marginVertical: 0,
-    marginHorizontal:5,
+    marginHorizontal: 5,
     flexDirection: 'row',
-    maxHeight:35,
-    marginBottom:10
+    maxHeight: 35,
+    marginBottom: 10
     // backgroundColor:'red'
   },
   item: {
-    flexDirection:'row',
+    flexDirection: 'row',
     width: 100,
     height: 35,
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 3,
     borderRadius: 1,
-    flex:1
+    flex: 1
   },
   itemText: {
     color: '#000',
