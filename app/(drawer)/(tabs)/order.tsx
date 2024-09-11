@@ -1,17 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, ScrollView, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // Add this import for icons
 import { categories, items } from '../../../components/db';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useLocalSearchParams } from 'expo-router';
 import { useDispatch } from 'react-redux';
 import uuid from 'react-native-uuid';
 import { saveOrder } from '@/redux/slice/orderSlice';
 import { RootState } from '@/redux/store/store';
 import { useSelector } from 'react-redux';
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused, useRoute } from '@react-navigation/native';
 import SamplePrint from '../../../components/bluetooth/SamplePrint';
+import { useKOTPrinter } from '@/components/thermalPrint/kotPrint';
+import OrientationLocker from 'react-native-orientation-locker';
+
 const OrderPage = () => {
   const [selectedCategory, setSelectedCategory] = useState(categories[0]); // Default to the first category
   const [order, setOrder] = useState<any>([]);
@@ -22,19 +25,24 @@ const OrderPage = () => {
   const [searchBy, setSearchBy] = useState('name'); // State to toggle between search by name or code
   const [selectedOrderedItem, setSelectedOrderedItem] = useState(null); // State for selected ordered item
   const [selectedOrderingItem, setSelectedOrderingItem] = useState(null); // State for selected ordering item
-  const { tableId } = useLocalSearchParams();  // Use this to get tableId from URL params
 
   const dispatch = useDispatch();
   const isFocused = useIsFocused()
-
   const orders = useSelector((state: RootState) => state.orders);
- 
+  const { printKOT } = useKOTPrinter();
+  const { tableId } = useLocalSearchParams();  // Use this to get tableId from URL params
+
   // Filter orders for the current table
   const currentTableOrders = orders.filter(order => order?.tableNumber === parseInt(`${tableId}`));
-console.log("currentTableOrders",currentTableOrders);
 
   useEffect(() => {
+    OrientationLocker?.lockToLandscape();
+    return () => {
+      OrientationLocker?.unlockAllOrientations();
+    };
+  }, []);
 
+  useEffect(() => {
     if (isFocused && currentTableOrders.length > 0) {
       setActiveTab('Ordered');
     } else {
@@ -117,14 +125,30 @@ console.log("currentTableOrders",currentTableOrders);
       customer: { name: 'Jane Smith', contact: '123-456-7890' },  // Example, replace with actual customer details
       items: order,
       total: subtotal,
-      status:"occupied"
+      status: "occupied"
     };
 
     dispatch(saveOrder(orderDetails));  // Save the order in Redux
     setOrder([]) // Mark table as occupied
+    handleKOTPrint();
     router.back();  // Navigate back to the tables page
   };
+
+  const handleKOTPrint = () => {
+    printKOT({
+      tableNumber: 110,
+      guests: 1,
+      orderNumber: '00034',
+      staffName: 'Admin',
+      time: '09-08 00:54',
+      items: [
+        { category: 'Salads', name: 'Arugula', quantity: 1, note: 'Regular' },
+        { category: 'Sandwiches', name: 'Fairy bread', quantity: 1, note: 'spicy' },
+      ],
+    });
+  };
   const renderCategoryTab = ({ item }) => (
+  
     <TouchableOpacity
       onPress={() => {
         setSelectedCategory(item);
@@ -152,7 +176,7 @@ console.log("currentTableOrders",currentTableOrders);
       addItemToOrder(item)
     }} style={styles.itemCard}>
       <Text style={styles.itemName}>{item.name}</Text>
-      <Text style={styles.itemPrice}>{item.price}</Text>
+      <Text style={styles.itemPrice}>{`₹${item.price}`}</Text>
     </TouchableOpacity>
   );
 
@@ -178,15 +202,14 @@ console.log("currentTableOrders",currentTableOrders);
 
   const renderSummaryFooter = () => (
     <View style={styles.summaryFooter}>
-      <Text style={styles.summaryText}>Table:{tableId}</Text>
       <Text style={styles.summaryText}>Quantity: {order.reduce((total, item) => total + item.quantity, 0)}</Text>
       <Text style={styles.summaryText}>Subtotal: {subtotal}</Text>
-      {activeTab === 'Ordering' && <TouchableOpacity style={styles.sendButton} onPress={handleSaveOrder}>
-        <Text style={styles.sendButtonText}>Send</Text>
-    
+      {activeTab === 'Ordering' && <TouchableOpacity disabled={order.length == 0} style={styles.sendButton} onPress={handleSaveOrder}>
+        <Text disabled={order.length == 0} style={styles.sendButtonText}>Send</Text>
+
 
       </TouchableOpacity>}
-      {currentTableOrders.length>0&&<SamplePrint order={currentTableOrders} />}
+      {currentTableOrders.length > 0 && activeTab === "Ordered" && <SamplePrint order={currentTableOrders} />}
     </View>
 
   );
@@ -319,6 +342,9 @@ console.log("currentTableOrders",currentTableOrders);
             >
               <Text style={[styles.tabText, activeTab === 'Ordering' && styles.activeTabText]}>Ordering</Text>
             </TouchableOpacity>
+            <TouchableOpacity>
+              <Text style={[styles.tabText]}>{`Table:${tableId}`}</Text>
+            </TouchableOpacity>
             <TouchableOpacity
               onPress={() => {
 
@@ -431,6 +457,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   summaryFooter: {
+    display: "flex",
     marginTop: 10,
   },
   summaryText: {
@@ -538,16 +565,21 @@ const styles = StyleSheet.create({
   },
   tabsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 10,
+    justifyContent: 'space-between',
+    marginBottom: 5,
   },
   tab: {
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 5,
+    borderBottomWidth: 2,
+    borderBottomColor: 'gray',
   },
   activeTab: {
-    backgroundColor: '#f5a623',
+    // backgroundColor: '#f5a623',
+    borderBottomWidth: 2,
+    borderBottomColor: 'cyan',
+    borderRadius: 1
   },
   tabText: {
     fontSize: 14,
@@ -607,9 +639,9 @@ function HorizontalStrip() {
     { label: 'Customer', backgroundColor: '#66cdaa', icon: 'person-add-outline' },
     { label: 'Staff', backgroundColor: '#8bc34a', icon: 'man-outline' },
     { label: 'Receipt', backgroundColor: '#cddc39', icon: 'print-outline' },
-    { label: 'KOT', backgroundColor: '#ffeb3b', icon: 'receipt-outline' },
     { label: 'Transfer', backgroundColor: '#ff9800', icon: 'swap-horizontal-outline' },
     { label: 'Combine', backgroundColor: '#9c27b0', icon: 'sync-outline' },
+    { label: 'Quick Pay', backgroundColor: '#ffeb3b', icon: 'cash-outline' },
     { label: 'Priority', backgroundColor: '#4bc34a', icon: 'speedometer-outline' },
     { label: 'Void', backgroundColor: '#ff9800', icon: 'trash-outline' },
 
@@ -619,7 +651,6 @@ function HorizontalStrip() {
     // Handle the press event for each item
     switch (label) {
       case '':
-        // Perform action for Delivery
         router.back()
         break;
       case 'Customer':

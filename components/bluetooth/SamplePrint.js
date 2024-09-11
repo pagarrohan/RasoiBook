@@ -95,7 +95,7 @@ const printReceipt = async () => {
 
   return (
 
-      <View style={styles.btn}>
+      <View style={styles.printReceiptButtonText}>
         <Button onPress={printReceipt} title="Print Receipt" />
       </View>
   );
@@ -104,7 +104,11 @@ const printReceipt = async () => {
 export default ReceiptPrint;
 
 const styles = StyleSheet.create({
-  btn: {
-    marginBottom: 8,
+ 
+  printReceiptButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
 });

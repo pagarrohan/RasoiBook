@@ -5,12 +5,11 @@ import { View, Text, FlatList, StyleSheet, useWindowDimensions, TouchableOpacity
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store/store';
+import { useRoute } from '@react-navigation/native';
 
 const RestaurantTables = () => {
   const tables = useSelector((state: RootState) => state.tables); // Assuming your tables are stored here
   const orders = useSelector((state: RootState) => state.orders); // Orders from Redux store
-console.log("mounttttttttt");
-console.log("table orders",orders);
 
   const { width, height } = useWindowDimensions();
   const isPortrait = height > width;
@@ -19,7 +18,6 @@ console.log("table orders",orders);
   // Function to extract the order data for each table
   const getOrderDataForTable = (tableNumber: number) => {
     const tableOrder = orders.find(order => order.tableNumber === tableNumber);
-
 
     // If there's an order for the current table, return its data; otherwise, return default values
     if (tableOrder) {
@@ -45,7 +43,7 @@ console.log("table orders",orders);
 
     return (
       <TableCard
-        tableNumber={item.tableNumber}
+        tableNumber={item.tableName}
         status={orderData.status}
         total={orderData.total}
         waiterName={orderData.waiterName}
