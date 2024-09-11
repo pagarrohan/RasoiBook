@@ -4,6 +4,7 @@ import someReducer from '../slice/someSlice';
 import ordersReducer from '../slice/orderSlice';
 import tableGroupReducer from '../slice/table/tableGroupSlice';
 import tableReducer from '../slice/table/tableSlice';
+import categeorySlice from '../slice/menu/categeorySlice';
 
 export const store = configureStore({
   reducer: {
@@ -11,6 +12,7 @@ export const store = configureStore({
       orders: ordersReducer,
       tables: tableReducer,  // Add the tableSlice
       tableGroups: tableGroupReducer,  // Add the tableGroupSlice
+      categories:categeorySlice
 
   },
 });

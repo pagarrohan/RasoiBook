@@ -15,23 +15,23 @@ const settingsList = [
 
 ];
 
-const settingsDetails = {
+const settingsDetails:any = {
   Store: [
     { title: 'Store details', description: 'Add/edit store information' },
     { title: 'Staff', description: 'Add/edit staff details' }
   ],
   Menu: [
     { title: 'Tables', description: 'add/edit/delete tables' },
-    { title: 'Table Group', description: 'add/edit/delete table group'},
+    { title: 'Table Group', description: 'add/edit/delete table group' },
     { title: 'Items', description: 'add/edit/delete items' },
     { title: 'Categories', description: 'add/edit/delete categories' },
     { title: 'Kitchen Note', description: 'add/edit/delete kitchen note' },
     { title: 'Void Reason', description: 'add/edit/delete void reason' },
     { title: 'Discount', description: 'add/edit/delete discount' },
-    { title: 'Tax', description: 'Setup'},
-    { title: 'Payment Method', description: 'add/edit/delete Payment Method'},
-    { title: 'Invoice Number', description: ''},
-    { title: 'Order Number', description: ''},
+    { title: 'Tax', description: 'Setup' },
+    { title: 'Payment Method', description: 'add/edit/delete Payment Method' },
+    { title: 'Invoice Number', description: '' },
+    { title: 'Order Number', description: '' },
   ],
   'Dine In': [
     { title: 'Table Management', description: 'Manage tables and seating' },
@@ -57,20 +57,23 @@ const SettingScreen = () => {
   const handleBack = () => {
     navigation.goBack();
   };
-const settingsHandler=(title)=>{
-    
+  const settingsHandler = (title: any) => {
+
     switch (title) {
-        case 'Tables':
-           router.navigate('/(drawer)/(settings)/menu/table')
-            break;
-            case 'Table Group':
-                router.navigate('/(drawer)/(settings)/menu/tableGroup')
-                 break;
-    
-        default:
-            break;
+      case 'Tables':
+        router.navigate('/(drawer)/(settings)/menu/table')
+        break;
+      case 'Table Group':
+        router.navigate('/(drawer)/(settings)/menu/tableGroup')
+        break;
+      case 'Categories':
+        router.navigate('/(drawer)/(settings)/menu/CategoryScreen')
+        break;
+
+      default:
+        break;
     }
-}
+  }
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Top Navigation Bar */}
@@ -100,16 +103,17 @@ const settingsHandler=(title)=>{
         </View>
 
         {/* Second Section (Settings Details) */}
-        <View style={[styles.settingDetails, { flex: isPortrait ? 0.6 :0.8 }]}>
-        
+        <View style={[styles.settingDetails, { flex: isPortrait ? 0.6 : 0.8 }]}>
+
           {/* Details Section - Reusing List Style */}
+          
           <FlatList
             data={settingsDetails[selectedSetting]}
             keyExtractor={(item, index) => index.toString()}
             renderItem={({ item }) => (
-              <TouchableOpacity style={styles.detailItem}  onPress={()=>{settingsHandler(item.title)}}>
+              <TouchableOpacity style={styles.detailItem} onPress={() => { settingsHandler(item.title) }}>
                 <Text style={styles.detailTitle}>{item.title}</Text>
-                {item.description&&<Text style={styles.detailDescription}>{item.description}</Text>}
+                {item.description && <Text style={styles.detailDescription}>{item.description}</Text>}
               </TouchableOpacity>
             )}
           />
